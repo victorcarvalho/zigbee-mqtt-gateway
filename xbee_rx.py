@@ -1,5 +1,6 @@
 import struct
 import time
+import logging
 import paho.mqtt.client as mqtt
 from digi.xbee.devices import XBeeDevice
 from digi.xbee.exception import InvalidPacketException, TimeoutException
@@ -13,6 +14,19 @@ class XBeeMQTTBridge:
         self.mqtt_port = mqtt_port
         self.mqtt_topic = mqtt_topic
         self.mqtt_client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+        
+        self.logger = logging.getLogger()
+        self.logger.setLevel(logging.INFO)
+        # create console handler
+        c_handler = logging.StreamHandler()
+        c_format = logging.Formatter(fmt='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d-%m-%Y %H:%M:%S')
+        c_handler.setFormatter(c_format)
+        self.logger.addHandler(c_handler)
+
+        # create file handler
+        f_handler = logging.FileHandler('app.log')
+        f_handler.setFormatter(c_format)
+        self.logger.addHandler(f_handler)
 
         # target_address = None
         # self.target_address = XBee64BitAddress.from_hex_string(target_address)
@@ -29,9 +43,9 @@ class XBeeMQTTBridge:
             # self._unpack_temperature(xbee_message.data)
             # self.mqtt_publish_data(temperature)
         except (InvalidPacketException, TimeoutException) as e:
-            print(f"Error processing packet: {e}")
+            self.logger.error(f"Error processing packet: {e}")
         except UnicodeDecodeError:
-            print("Decoding error while reading data.")
+            self.logger.error("Decoding error while reading data.")
 
     def _unpack_temperature(self, data):
         """Unpack the received data into a float."""
@@ -44,25 +58,27 @@ class XBeeMQTTBridge:
 
     def mqtt_publish_data(self, temperature, humidity):
         """Publish the temperature and humidity."""
-        print("Data published")
-        print(temperature, humidity)
+        self.logger.info("Data published")
+        # self.logger.info(temperature, humidity)
+        self.logger.info(f'{temperature}, {humidity}')
         self.mqtt_client.publish(self.mqtt_topic + '/temperature', temperature)
         self.mqtt_client.publish(self.mqtt_topic + '/humidity', humidity)
 
     def mqtt_publish_temperature(self, temperature):
         """Publish the temperature and humidity."""
-        print("Data published")
-        print(temperature)
+        self.logger.info("Data published")
+        self.logger.info(temperature)
         self.mqtt_client.publish(self.mqtt_topic + '/temperature', temperature)
 
     def xbee_ask_temperature(self):
         """Send command to XBee to request temperature."""
         try:
-            self.device.send_data_broadcast("0")
+            # self.device.send_data_broadcast("0")
+            self.device.send_data_broadcast("GET_TEMP")
             # self.device.send_data(self.device.get_remote_device(target_address), bytes([0]))
-            print("Requested temperature from XBee")
+            self.logger.info("Requested temperature from XBee")
         except Exception as e:
-            print(f"Failed to request temperature: {e}")
+            self.logger.error(f"Failed to request temperature: {e}")
 
         
     def xbee_ask_humidity(self):
@@ -71,17 +87,18 @@ class XBeeMQTTBridge:
     def start(self):
         try:
             self.device.open()
-            print("Waiting for packets from XBee in API mode 1")
+            self.logger.debug("Conexão XBee estabelecida. Aguardando pacotes (modo API 1)")
             self.device.add_data_received_callback(self.xbee_data_receive_callback)
+            self.logger.info("Gateway iniciado com sucesso")
 
-            input("Press Enter to exit...\n")
+            # input("Press Enter to exit...\n")
 
             while True:
                 self.xbee_ask_temperature()
-                time.sleep(2)
+                time.sleep(10)
 
         except Exception as e:
-            print(f"Error in reading: {e}")
+            self.logger.error(f"Erro de leitura: {str(e)}")
         finally:
             self.cleanup()
 
@@ -89,7 +106,7 @@ class XBeeMQTTBridge:
         """Close the XBee device connection."""
         if self.device.is_open():
             self.device.close()
-            print("Connection with XBee closed.")
+            self.logger.info("Connection with XBee closed")
 
 if __name__ == "__main__":
     # Configuration
