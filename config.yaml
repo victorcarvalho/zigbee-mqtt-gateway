@@ -1,0 +1,10 @@
+xbee:
+  serial_port: "/dev/ttyS0"
+  baud_rate: 9600
+  target_address: null
+
+mqtt:
+  broker: "localhost"
+  port: 1883
+  topic: "xbee/data"
+  
