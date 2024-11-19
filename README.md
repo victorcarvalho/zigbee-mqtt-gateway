@@ -2,7 +2,7 @@
 
 Este projeto implementa um gateway para comunicação entre sensores XBee e um broker MQTT. Ele coleta dados de temperatura e umidade a partir de sensores conectados a dispositivos XBee e os transmite para um servidor MQTT, permitindo o monitoramento remoto desses parâmetros.
 
-![Visão geral da arquitetura do sistema]("iot-architecture.png")
+![Visão geral da arquitetura do sistema](iot-architecture.png)
 
 ## Arquitetura do sistema
 
