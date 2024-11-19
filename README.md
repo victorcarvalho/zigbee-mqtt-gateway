@@ -2,29 +2,32 @@
 
 Este projeto implementa um gateway para comunicação entre sensores XBee e um broker MQTT. Ele coleta dados de temperatura e umidade a partir de sensores conectados a dispositivos XBee e os transmite para um servidor MQTT, permitindo o monitoramento remoto desses parâmetros.
 
+![Visão geral da arquitetura do sistema]("iot-architecture.png")
+
 ## Arquitetura do sistema
 
 O sistema é composto pelos seguintes dispositivos e componentes:
 
-- XBee S2C: Dispositivo que implementa o protocolo ZigBee, utilizado para comunicação sem fio entre os dispositivos da rede.
+- DHT-11: Sensor utilizado para coletar dados de temperatura e humidade. Ele está conectado a um NodeMCU que, por sua vez, transmite os dados via comunicação serial para o XBee.
 
-- DHT-11: Sensor de temperatura e umidade, responsável por coletar dados ambientais. Ele está conectado a um NodeMCU que, por sua vez, transmite os dados para o XBee.
+- XBee S2C: Utilizado para comunicação Zigbee entre os dispositivos da rede de sensores sem fios.
 
-- NodeMCU (ESP8266): Módulo Wi-Fi que conecta o sensor DHT-11 ao gateway, transmitindo os dados de temperatura e umidade via XBee.
+- NodeMCU (ESP8266): Módulo baseado no ESP8266 que conecta o sensor DHT-11 ao gateway, transmitindo os dados de temperatura e umidade via XBee.
 
-- Raspberry Pi 3: Dispositivo que atua como gateway entre o XBee e o broker MQTT. Ele recebe os dados do XBee e publica as informações no servidor MQTT para monitoramento.
+- Raspberry Pi 3: Dispositivo que atua como gateway entre o XBee e o broker MQTT. Ele recebe os dados do XBee e publica as informações no servidor MQTT para monitoramento. Além disso, executa o servidor MQTT (Mosquitto) e o NodeRED.
 
 - Broker MQTT: Servidor que recebe e gerencia as mensagens publicadas pelos dispositivos. Ele permite que os dados de temperatura e umidade sejam acessados por outros sistemas ou aplicações.
 
+- NodeRED: Ferramenta de integração IoT que consome e apresenta os dados dos sensores em interface gráfica web.
 
 ## Requisitos de hardware
-XBee S2C: Um dispositivo que implementa o protocolo ZigBee configurado corretamente e conectado via porta serial.
+- XBee S2C: Um dispositivo que implementa o protocolo ZigBee configurado corretamente e conectado via porta serial.
 
-DHT-11: Um sensor conectado ao XBee via NodeMCU que envia dados de temperatura e umidade.
+- DHT-11: Um sensor conectado ao XBee via NodeMCU que envia dados de temperatura e umidade.
 
-NodeMCU: um módulo baseado no ESP8266 que se recebe os dados do DHT-11 e envia via Xbee para o gateway.
+- NodeMCU: um módulo baseado no ESP8266 que se recebe os dados do DHT-11 e envia via Xbee para o gateway.
 
-Raspberry Pi 3: Um SoC que implementa um gateway de ZigBee para MQTT.
+- Raspberry Pi 3: Um SoC que implementa um gateway de ZigBee para MQTT.
 
 ## Requisitos de software
 
