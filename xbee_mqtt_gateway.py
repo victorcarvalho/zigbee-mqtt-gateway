@@ -90,17 +90,33 @@ class XbeeMQTTGateway:
         rc = args[-1]  # Last argument is typically the result code
         self.logger.warning(f"Disconnected from MQTT broker with result code: {rc}")
 
-    def connect_mqtt(self):
-        """Establish connection to MQTT broker."""
-        try:
-            self.mqtt_client.connect(self.mqtt_config.broker, self.mqtt_config.port)
-            self.mqtt_client.loop_start()
-        except Exception as e:
-            self.logger.error(f"Failed to connect to MQTT broker: {e}")
-            raise
+    # def connect_mqtt(self):
+    #     """Establish connection to MQTT broker."""
+    #     try:
+    #         self.mqtt_client.connect(self.mqtt_config.broker, self.mqtt_config.port)
+    #         self.mqtt_client.loop_start()
+    #     except Exception as e:
+    #         self.logger.error(f"Failed to connect to MQTT broker at {self.mqtt_config.broker}:{self.mqtt_config.port}: {e}")
+    #         raise
+
+    def connect_mqtt(self, retries: int = 3, delay: int = 5):
+        """Establish connection to MQTT broker with retries."""
+        for attempt in range(retries):
+            try:
+                self.mqtt_client.connect(self.mqtt_config.broker, self.mqtt_config.port)
+                self.mqtt_client.loop_start()
+                self.logger.info("Connected to MQTT broker")
+                return
+            except Exception as e:
+                self.logger.error(f"Failed to connect to MQTT broker (attempt {attempt + 1}/{retries}): {e}")
+                time.sleep(delay)
+            raise RuntimeError("Failed to connect to MQTT broker after multiple attempts.")
 
     def _unpack_sensor_data(self, data: bytes) -> Tuple[float, float]:
         """Unpack the received sensor data into temperature and humidity values."""
+        if len(data) != struct.calcsize('ff'):
+            self.logger.error(f"Received data length {len(data)} is invalid. Expected {struct.calcsize('ff')}.")
+            raise ValueError("Invalid data length.")
         try:
             return struct.unpack('ff', data)
         except struct.error as e:
@@ -111,12 +127,10 @@ class XbeeMQTTGateway:
         """Publish sensor data to MQTT broker."""
         try:
             self.mqtt_client.publish(
-                f"{self.mqtt_config.topic}/{self.TEMPERATURE_TOPIC}",
-                temperature
+                f"{self.mqtt_config.topic}/{self.TEMPERATURE_TOPIC}", temperature
             )
             self.mqtt_client.publish(
-                f"{self.mqtt_config.topic}/{self.HUMIDITY_TOPIC}",
-                humidity
+                f"{self.mqtt_config.topic}/{self.HUMIDITY_TOPIC}", humidity
             )
             self.logger.info(f"Published sensor data - Temperature: {temperature}, Humidity: {humidity}")
         except Exception as e:
