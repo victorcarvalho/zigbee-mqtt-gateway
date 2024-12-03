@@ -90,14 +90,6 @@ class XbeeMQTTGateway:
         rc = args[-1]  # Last argument is typically the result code
         self.logger.warning(f"Disconnected from MQTT broker with result code: {rc}")
 
-    # def connect_mqtt(self):
-    #     """Establish connection to MQTT broker."""
-    #     try:
-    #         self.mqtt_client.connect(self.mqtt_config.broker, self.mqtt_config.port)
-    #         self.mqtt_client.loop_start()
-    #     except Exception as e:
-    #         self.logger.error(f"Failed to connect to MQTT broker at {self.mqtt_config.broker}:{self.mqtt_config.port}: {e}")
-    #         raise
 
     def connect_mqtt(self, retries: int = 3, delay: int = 5):
         """Establish connection to MQTT broker with retries."""
@@ -123,24 +115,27 @@ class XbeeMQTTGateway:
             self.logger.error(f"Failed to unpack sensor data: {e}")
             raise
 
-    def _publish_sensor_data(self, temperature: float, humidity: float):
+    def _publish_sensor_data(self, temperature: float, humidity: float, sender_address: XBee64BitAddress):
         """Publish sensor data to MQTT broker."""
         try:
-            self.mqtt_client.publish(
-                f"{self.mqtt_config.topic}/{self.TEMPERATURE_TOPIC}", temperature
-            )
-            self.mqtt_client.publish(
-                f"{self.mqtt_config.topic}/{self.HUMIDITY_TOPIC}", humidity
-            )
-            self.logger.info(f"Published sensor data - Temperature: {temperature}, Humidity: {humidity}")
+            temperature_topic = f"{self.mqtt_config.topic}/{sender_address}/{self.TEMPERATURE_TOPIC}"
+            humidity_topic = f"{self.mqtt_config.topic}/{sender_address}/{self.HUMIDITY_TOPIC}"
+            self.mqtt_client.publish(temperature_topic, temperature)
+            self.mqtt_client.publish(humidity_topic, humidity)
+            
+            self.logger.info(f"Published sensor data - Temperature: {temperature}, Humidity: {humidity}, Sender: {sender_address}")
+
         except Exception as e:
             self.logger.error(f"Failed to publish sensor data: {e}")
 
     def xbee_data_receive_callback(self, xbee_message):
         """Handle incoming XBee messages."""
         try:
+             # Obter o endereço do dispositivo que enviou a mensagem
+            sender_address = xbee_message.remote_device.get_64bit_addr()
+            self.logger.info(f"Received message from XBee at address: {sender_address}")
             temperature, humidity = self._unpack_sensor_data(xbee_message.data)
-            self._publish_sensor_data(temperature, humidity)
+            self._publish_sensor_data(temperature, humidity, sender_address)
         except (InvalidPacketException, TimeoutException, struct.error) as e:
             self.logger.error(f"Error processing XBee message: {e}")
         except Exception as e:
