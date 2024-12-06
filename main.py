@@ -210,7 +210,6 @@ def load_config(config_file: str) -> Tuple[XBeeConfig, MQTTConfig]:
 if __name__ == "__main__":
     # Carregar as configurações do arquivo YAML
     xbee_config, mqtt_config = load_config('config.yaml')
-
     # Criar e iniciar o gateway XBee-MQTT
     gateway = XbeeMQTTGateway(xbee_config, mqtt_config)
     gateway.connect_mqtt()
