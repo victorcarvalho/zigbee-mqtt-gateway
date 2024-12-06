@@ -1,3 +1,4 @@
+import time
 import unittest
 import struct
 from main import XbeeMQTTGateway, XBeeConfig, MQTTConfig
@@ -22,6 +23,8 @@ class TestXbeeMQTTGateway(unittest.TestCase):
     def test_connect_mqtt(self):
         # Test the connection to the MQTT broker
         self.gateway.connect_mqtt()
+        # Introduce a short delay (1 sec) to give the MQTT client some time to establish the connection
+        time.sleep(1)
         self.assertTrue(self.gateway.mqtt_client.is_connected())
 
     def test_publish_sensor_data(self):

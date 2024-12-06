@@ -17,10 +17,11 @@ class MQTTConfig:
 
 
 class XBeeConfig:
-    def __init__(self, serial_port: str, baud_rate: int, target_address: Optional[str] = None):
+    def __init__(self, serial_port: str, baud_rate: int, target_address: Optional[str] = None, command: Optional[str] = "GET_DATA"):
         self.serial_port = serial_port
         self.baud_rate = baud_rate
         self.target_address = target_address
+        self.command = command
 
 
 class LoggerSetup:
@@ -144,7 +145,7 @@ class XbeeMQTTGateway:
     def request_sensor_data(self):
         """Send command to XBee to request sensor data."""
         try:
-            self.device.send_data_broadcast("GET_TEMP")
+            self.device.send_data_broadcast(self.xbee_config.command)
             self.logger.debug("Requested sensor data from XBee")
         except XBeeException as e:
             self.logger.error(f"Failed to request sensor data: {e}")
@@ -194,7 +195,8 @@ def load_config(config_file: str) -> Tuple[XBeeConfig, MQTTConfig]:
     xbee_config = XBeeConfig(
         serial_port=config_data['xbee']['serial_port'],
         baud_rate=config_data['xbee']['baud_rate'],
-        target_address=config_data['xbee'].get('target_address')
+        target_address=config_data['xbee'].get('target_address'),
+        command=config_data['xbee'].get('command', 'GET_DATA')
     )
 
     # Carregar configurações do MQTT

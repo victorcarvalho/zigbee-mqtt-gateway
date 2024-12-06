@@ -2,6 +2,7 @@ xbee:
   serial_port: "/dev/ttyS0"
   baud_rate: 9600
   target_address: null
+  command: "GET_DATA"
 
 mqtt:
   broker: "localhost"
